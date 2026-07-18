@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Жёлтый Слон — панель управления меню</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Панель управления меню. Публикуется рядом с сайтом как admin.html.
+   Адрес воркера — в API_BASE ниже (тот же, что на сайте).
+   ============================================================ */
+:root{
+  --bg:#17110C; --bg-2:#1F1712; --card:#271D15; --card-2:#2F241A;
+  --amber:#F0B43A; --amber-deep:#C88A29; --cream:#F3E9D8; --cream-dim:#C4B49B;
+  --cream-faint:#8C7C66; --line:rgba(243,233,216,.12); --ok:#a9d68a; --err:#e79c94;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--cream);font-family:"Manrope",system-ui,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2{font-family:"Spectral",Georgia,serif;font-weight:600;letter-spacing:-.01em}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+a{color:var(--amber);text-decoration:none}
+
+/* header */
+header{border-bottom:1px solid var(--line);background:rgba(23,17,12,.9);position:sticky;top:0;z-index:10}
+.hbar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{font-family:"Spectral",serif;font-size:19px;font-weight:600}
+.brand small{display:block;font-family:"Manrope";font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--cream-faint);font-weight:700;margin-top:1px}
+.site-link{font-size:13px;color:var(--cream-dim)}
+
+/* login */
+.login{max-width:380px;margin:14vh auto;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:18px;padding:34px 30px;text-align:center}
+.login h1{font-size:26px;margin-bottom:6px}
+.login p{color:var(--cream-faint);font-size:14px;margin-bottom:22px}
+.login input{width:100%;font-family:inherit;font-size:16px;color:var(--cream);background:var(--card);
+  border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:14px;text-align:center}
+.login input:focus{outline:none;border-color:var(--amber)}
+
+/* buttons */
+.btn{font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;border:none;
+  padding:13px 22px;border-radius:100px;display:inline-flex;align-items:center;gap:8px;
+  transition:transform .15s,box-shadow .15s,background .2s,color .2s}
+.btn-primary{background:var(--amber);color:#221703}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(240,180,58,.5)}
+.btn-ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+
+/* editor */
+.editor{display:none;padding:26px 0 140px}
+.editor-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.editor-head h1{font-size:30px}
+.editor-head p{color:var(--cream-faint);font-size:14px;margin-top:4px}
+
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.item.off{opacity:.6}
+.item-grid{display:grid;grid-template-columns:150px 1fr 130px;gap:12px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream-faint);font-weight:700}
+.fld input{font-family:inherit;font-size:15px;color:var(--cream);background:var(--bg-2);
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.fld input:focus{outline:none;border-color:var(--amber)}
+.item-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--line);gap:10px;flex-wrap:wrap}
+.avail{display:inline-flex;align-items:center;gap:9px;font-size:14px;color:var(--cream-dim);cursor:pointer;user-select:none}
+.avail input{display:none}
+.sw{width:42px;height:24px;border-radius:100px;background:#4a3a28;position:relative;transition:background .2s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:var(--cream);transition:transform .2s}
+.avail input:checked + .sw{background:var(--amber-deep)}
+.avail input:checked + .sw::after{transform:translateX(18px)}
+.row-actions{display:flex;gap:6px}
+.iconbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--bg-2);
+  color:var(--cream-dim);cursor:pointer;display:grid;place-items:center;font-size:15px;transition:.15s}
+.iconbtn:hover{color:var(--cream);border-color:var(--amber-deep)}
+.iconbtn.del:hover{color:var(--err);border-color:var(--err)}
+
+/* sticky save bar */
+.savebar{position:fixed;left:0;right:0;bottom:0;background:rgba(23,17,12,.94);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);z-index:20}
+.savebar .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;gap:14px}
+.status{font-size:14px;font-weight:600;min-height:20px}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)} .status.dim{color:var(--cream-faint)}
+.toolbar{display:flex;gap:10px}
+
+@media(max-width:640px){
+  .item-grid{grid-template-columns:1fr 1fr}
+  .fld.name,.fld.desc{grid-column:1/-1}
+  .savebar .wrap{height:auto;padding:12px 20px;flex-direction:column;align-items:stretch}
+  .toolbar .btn{flex:1;justify-content:center}
+}
+</style>
+</head>
+<body>
+<script>const API_BASE = "https://slon-relay.suplex9561.workers.dev";</script>
+
+<header>
+  <div class="wrap hbar">
+    <div class="brand">Жёлтый Слон<small>Панель меню</small></div>
+    <a class="site-link" href="./" target="_blank">Открыть сайт ↗</a>
+  </div>
+</header>
+
+<!-- ЛОГИН -->
+<div class="wrap">
+  <div class="login" id="login">
+    <h1>Вход</h1>
+    <p>Введите пароль, чтобы редактировать меню</p>
+    <input id="pass" type="password" placeholder="Пароль" autocomplete="current-password">
+    <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center">Войти</button>
+    <div class="status dim" id="loginStatus" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- РЕДАКТОР -->
+<div class="wrap editor" id="editor">
+  <div class="editor-head">
+    <div>
+      <h1>Меню</h1>
+      <p>Меняйте название, описание, цену и категорию. Переключатель «В наличии» скрывает блюдо с сайта, не удаляя его.</p>
+    </div>
+    <button class="btn btn-ghost" id="addBtn">＋ Добавить блюдо</button>
+  </div>
+  <div id="list"></div>
+  <button class="btn btn-ghost" id="addBtn2" style="width:100%;justify-content:center;margin-top:6px">＋ Добавить блюдо</button>
+</div>
+
+<!-- ПАНЕЛЬ СОХРАНЕНИЯ -->
+<div class="savebar" id="savebar" style="display:none">
+  <div class="wrap">
+    <div class="status dim" id="status">Загружаю меню…</div>
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="reloadBtn">Отменить правки</button>
+      <button class="btn btn-primary" id="saveBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Стартовое меню — используется, если в хранилище пусто (первый запуск). */
+const DEFAULT_MENU = [
+  {id:1, cat:"Завтраки", name:"Сырники со сметаной", desc:"Творожные, с домашним вареньем и сметаной", price:320, available:true},
+  {id:2, cat:"Завтраки", name:"Овсяная каша с грушей", desc:"На молоке, с карамелизированной грушей", price:280, available:true},
+  {id:3, cat:"Завтраки", name:"Омлет с томатами и сыром", desc:"Из трёх яиц, с зеленью и тостом", price:340, available:true},
+  {id:4, cat:"Завтраки", name:"Авокадо-тост", desc:"Хрустящий хлеб, авокадо, яйцо пашот", price:420, available:true},
+  {id:5, cat:"Бургеры", name:"Биг Бен Бургер", desc:"Говяжья котлета, соус, картофель фри", price:490, available:true},
+  {id:6, cat:"Бургеры", name:"Чикен Бургер", desc:"Куриное филе в панировке, свежие овощи", price:420, available:true},
+  {id:7, cat:"Бургеры", name:"Двойной чизбургер", desc:"Две котлеты, двойной сыр, бекон", price:560, available:true},
+  {id:8, cat:"Основное", name:"Свиные рёбрышки", desc:"В медово-горчичной глазури, гриль", price:690, available:true},
+  {id:9, cat:"Основное", name:"Стейк из говядины", desc:"С печёным картофелем и соусом", price:890, available:true},
+  {id:10, cat:"Основное", name:"Паста карбонара", desc:"Сливочный соус, бекон, пармезан", price:480, available:true},
+  {id:11, cat:"Основное", name:"Куриное филе на гриле", desc:"С овощами гриль и травами", price:520, available:true},
+  {id:12, cat:"Напитки", name:"Капучино", desc:"Свежая обжарка, плотная пенка", price:190, available:true},
+  {id:13, cat:"Напитки", name:"Раф лавандовый", desc:"Нежный, со сливками и лавандой", price:240, available:true},
+  {id:14, cat:"Напитки", name:"Домашний лимонад", desc:"Цитрус-мята или ягодный, 400 мл", price:220, available:true},
+  {id:15, cat:"Напитки", name:"Апельсиновый фреш", desc:"Свежевыжатый, 300 мл", price:260, available:true},
+  {id:16, cat:"Десерты", name:"Чизкейк Нью-Йорк", desc:"Классический, с ягодным соусом", price:290, available:true},
+  {id:17, cat:"Десерты", name:"Тирамису", desc:"Маскарпоне, кофе, савоярди", price:310, available:true},
+  {id:18, cat:"Десерты", name:"Шоколадный фондан", desc:"Тёплый, с жидкой начинкой и мороженым", price:330, available:true},
+];
+
+const $ = s => document.querySelector(s);
+let PASS = "";
+let items = [];
+
+/* ---------- Логин ---------- */
+async function doLogin(){
+  const pass = $("#pass").value;
+  const st = $("#loginStatus");
+  if(!pass){ st.className="status err"; st.textContent="Введите пароль"; return; }
+  $("#loginBtn").disabled = true; st.className="status dim"; st.textContent="Проверяю…";
+  try{
+    const r = await fetch(API_BASE + "/admin/check", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({password:pass})
+    });
+    if(r.ok){
+      PASS = pass;
+      $("#login").style.display="none";
+      $("#editor").style.display="block";
+      $("#savebar").style.display="block";
+      await loadMenu();
+    } else {
+      st.className="status err"; st.textContent="Неверный пароль";
+    }
+  }catch(e){
+    st.className="status err"; st.textContent="Нет связи с сервером";
+  }
+  $("#loginBtn").disabled = false;
+}
+$("#loginBtn").onclick = doLogin;
+$("#pass").addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
+
+/* ---------- Загрузка меню ---------- */
+async function loadMenu(){
+  setStatus("Загружаю меню…","dim");
+  try{
+    const r = await fetch(API_BASE + "/menu", {cache:"no-store"});
+    const data = await r.json();
+    items = (data && Array.isArray(data.menu) && data.menu.length)
+      ? data.menu.map(normalize)
+      : DEFAULT_MENU.map(normalize);
+  }catch(e){
+    items = DEFAULT_MENU.map(normalize);
+  }
+  render();
+  setStatus("Готово к работе","dim");
+}
+function normalize(m){
+  return {
+    id: m.id ?? Date.now() + Math.floor(Math.random()*1000),
+    cat: m.cat || "Без категории",
+    name: m.name || "",
+    desc: m.desc || "",
+    price: Number(m.price) || 0,
+    available: m.available !== false,
+  };
+}
+
+/* ---------- Отрисовка ---------- */
+function render(){
+  const cats = [...new Set(items.map(i=>i.cat).filter(Boolean))];
+  const listEl = $("#list");
+  listEl.innerHTML = items.map((m,i) => `
+    <div class="item ${m.available?"":"off"}">
+      <div class="item-grid">
+        <div class="fld"><label>Категория</label>
+          <input data-i="${i}" data-f="cat" list="cats" value="${escAttr(m.cat)}"></div>
+        <div class="fld name"><label>Название</label>
+          <input data-i="${i}" data-f="name" value="${escAttr(m.name)}"></div>
+        <div class="fld"><label>Цена, ₽</label>
+          <input data-i="${i}" data-f="price" type="number" min="0" value="${m.price}"></div>
+        <div class="fld full desc"><label>Описание</label>
+          <input data-i="${i}" data-f="desc" value="${escAttr(m.desc)}"></div>
+      </div>
+      <div class="item-foot">
+        <label class="avail">
+          <input type="checkbox" data-i="${i}" data-f="available" ${m.available?"checked":""}>
+          <span class="sw"></span> В наличии
+        </label>
+        <div class="row-actions">
+          <button class="iconbtn" data-move="up" data-i="${i}" title="Выше">↑</button>
+          <button class="iconbtn" data-move="down" data-i="${i}" title="Ниже">↓</button>
+          <button class="iconbtn del" data-del="${i}" title="Удалить">🗑</button>
+        </div>
+      </div>
+    </div>`).join("");
+  // список категорий для подсказки
+  $("#cats")?.remove();
+  const dl = document.createElement("datalist"); dl.id="cats";
+  dl.innerHTML = cats.map(c=>`<option value="${escAttr(c)}">`).join("");
+  document.body.appendChild(dl);
+}
+function escAttr(s){ return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+/* правки полей — без перерисовки, чтобы не терять фокус */
+$("#list").addEventListener("input", e => {
+  const el = e.target; const i = el.dataset.i; if(i===undefined) return;
+  const f = el.dataset.f;
+  if(f==="available"){ items[i].available = el.checked; el.closest(".item").classList.toggle("off", !el.checked); }
+  else if(f==="price"){ items[i].price = Number(el.value)||0; }
+  else { items[i][f] = el.value; }
+  markDirty();
+});
+/* структурные действия — с перерисовкой */
+$("#list").addEventListener("click", e => {
+  const del = e.target.closest("[data-del]");
+  const mv = e.target.closest("[data-move]");
+  if(del){ if(confirm("Удалить это блюдо?")){ items.splice(+del.dataset.del,1); render(); markDirty(); } }
+  if(mv){
+    const i = +mv.dataset.i, dir = mv.dataset.move==="up"?-1:1, j=i+dir;
+    if(j>=0 && j<items.length){ [items[i],items[j]]=[items[j],items[i]]; render(); markDirty(); }
+  }
+});
+
+function addItem(){
+  items.push(normalize({cat: items.length?items[items.length-1].cat:"Новая категория", name:"Новое блюдо", desc:"", price:0}));
+  render(); markDirty();
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
+$("#addBtn").onclick = addItem;
+$("#addBtn2").onclick = addItem;
+$("#reloadBtn").onclick = () => { if(confirm("Отменить несохранённые правки и загрузить сохранённое меню?")) loadMenu(); };
+
+/* ---------- Сохранение ---------- */
+$("#saveBtn").onclick = async () => {
+  // лёгкая проверка
+  for(const m of items){
+    if(!m.name.trim()){ setStatus("У блюда пустое название — заполните перед сохранением","err"); return; }
+  }
+  const btn = $("#saveBtn"); btn.disabled = true; setStatus("Сохраняю…","dim");
+  try{
+    const clean = items.map(m => ({
+      id:m.id, cat:m.cat.trim()||"Без категории", name:m.name.trim(),
+      desc:m.desc.trim(), price:Number(m.price)||0, available:m.available!==false
+    }));
+    const r = await fetch(API_BASE + "/menu", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Admin-Password":PASS},
+      body:JSON.stringify({menu:clean})
+    });
+    if(r.status===401){ setStatus("Сессия истекла — войдите заново","err"); showLogin(); return; }
+    if(!r.ok) throw new Error();
+    setStatus("Сохранено ✔  Изменения появятся на сайте в течение минуты","ok");
+  }catch(e){
+    setStatus("Не удалось сохранить. Проверьте связь и попробуйте ещё раз","err");
+  }
+  btn.disabled = false;
+};
+
+function showLogin(){
+  $("#editor").style.display="none"; $("#savebar").style.display="none";
+  $("#login").style.display="block"; $("#pass").value=""; PASS="";
+}
+function setStatus(t,cls){ const s=$("#status"); s.className="status "+(cls||"dim"); s.textContent=t; }
+function markDirty(){ const s=$("#status"); if(!s.classList.contains("err")) setStatus("Есть несохранённые изменения","dim"); }
+</script>
+</body>
+</html>
