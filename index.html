@@ -500,7 +500,7 @@ footer{border-top:1px solid var(--line-soft);margin-top:20px;padding:56px 0 40px
 <script>
 /* ============================================================
    БЭКЕНД. Когда поднимешь FastAPI + aiogram, впиши сюда адрес:
-     const API_BASE = "https://slon-relay.suplex9561.workers.dev";
+     const API_BASE = "https://api.твойдомен.ру";
    Формы шлют POST на  API_BASE + "/order"  и  API_BASE + "/booking"
    с JSON. Пока API_BASE = "" — сайт работает в демо-режиме
    (заявки не уходят, показывается сообщение об успехе).
@@ -511,7 +511,7 @@ footer{border-top:1px solid var(--line-soft);margin-top:20px;padding:56px 0 40px
 const API_BASE = "https://slon-relay.suplex9561.workers.dev";
 
 /* ---------- Меню ---------- */
-const MENU = [
+const DEFAULT_MENU = [
   {id:1, cat:"Завтраки", name:"Сырники со сметаной", desc:"Творожные, с домашним вареньем и сметаной", price:320},
   {id:2, cat:"Завтраки", name:"Овсяная каша с грушей", desc:"На молоке, с карамелизированной грушей", price:280},
   {id:3, cat:"Завтраки", name:"Омлет с томатами и сыром", desc:"Из трёх яиц, с зеленью и тостом", price:340},
@@ -531,7 +531,8 @@ const MENU = [
   {id:17, cat:"Десерты", name:"Тирамису", desc:"Маскарпоне, кофе, савоярди", price:310},
   {id:18, cat:"Десерты", name:"Шоколадный фондан", desc:"Тёплый, с жидкой начинкой и мороженым", price:330},
 ];
-const CATS = ["Все", "Завтраки", "Бургеры", "Основное", "Напитки", "Десерты"];
+let MENU = DEFAULT_MENU.slice();
+let CATS = ["Все"];
 const rub = n => n.toLocaleString("ru-RU") + " ₽";
 
 let activeCat = "Все";
@@ -561,7 +562,23 @@ function renderMenu(){
       </div>
     </article>`).join("");
 }
-renderTabs(); renderMenu();
+function buildCats(){
+  const seen = [];
+  MENU.forEach(m => { const c = (m.cat||"").trim(); if(c && !seen.includes(c)) seen.push(c); });
+  CATS = ["Все", ...seen];
+  if(!CATS.includes(activeCat)) activeCat = "Все";
+}
+async function loadMenu(){
+  try{
+    if(API_BASE){
+      const r = await fetch(API_BASE + "/menu", {cache:"no-store"});
+      if(r.ok){ const data = await r.json(); if(data && Array.isArray(data.menu) && data.menu.length) MENU = data.menu; }
+    }
+  }catch(e){ /* нет связи с хранилищем — покажем встроенное меню */ }
+  MENU = MENU.filter(m => m.available !== false);   // стоп-лист гостям не показываем
+  buildCats(); renderTabs(); renderMenu();
+}
+loadMenu();
 
 tabsEl.addEventListener("click", e => {
   const b = e.target.closest("[data-cat]"); if(!b) return;
