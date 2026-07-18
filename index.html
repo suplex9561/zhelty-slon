@@ -148,6 +148,8 @@ section{position:relative;z-index:1}
   transition:transform .2s,border-color .2s,background .2s;
 }
 .dish:hover{transform:translateY(-3px);border-color:var(--brass);background:var(--card-2)}
+.dish-img{margin:-22px -22px 2px;height:178px;overflow:hidden;border-radius:var(--r) var(--r) 0 0}
+.dish-img img{width:100%;height:100%;object-fit:cover;display:block}
 .dish-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 .dish h3{font-size:20px;font-weight:600;letter-spacing:0}
 .dish .price{font-family:"Spectral",serif;font-size:20px;color:var(--amber);font-weight:600;white-space:nowrap}
@@ -547,8 +549,11 @@ function renderTabs(){
 }
 function renderMenu(){
   const items = MENU.filter(m => activeCat==="Все" || m.cat===activeCat);
-  gridEl.innerHTML = items.map(m => `
+  gridEl.innerHTML = items.map(m => {
+    const imgHtml = m.img ? `<div class="dish-img"><img src="${m.img}" alt="${(m.name||"").replace(/"/g,"&quot;")}" loading="lazy"></div>` : "";
+    return `
     <article class="dish">
+      ${imgHtml}
       <div class="dish-top">
         <h3>${m.name}</h3>
         <div class="price">${rub(m.price)}</div>
@@ -560,7 +565,8 @@ function renderMenu(){
           ${cart[m.id] ? "В корзине · "+cart[m.id] : "В корзину"}
         </button>
       </div>
-    </article>`).join("");
+    </article>`;
+  }).join("");
 }
 function buildCats(){
   const seen = [];
